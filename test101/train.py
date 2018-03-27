@@ -32,7 +32,11 @@ class DataBatcher(Sequence):
     def __init__(self, datapoints, batch_size):
         # self.x, self.y = x_set, y_set
         self.datapoints = datapoints
-        self.batch_size = batch_size
+
+        if batch_size == 0:
+            self.batch_size = len(self.datapoints)
+        else:
+            self.batch_size = batch_size
 
         print('batcher created of batch_size', self.batch_size)
 
@@ -43,7 +47,7 @@ class DataBatcher(Sequence):
     def __getitem__(self, idx):
         # batch_x = self.x[idx * self.batch_size : (idx+1) * self.batch_size]
         # batch_y = self.y[idx * self.batch_size : (idx+1) * self.batch_size]
-        print('batch > __getitem__ for idx', idx)
+        # print('batch > __getitem__ for idx', idx)
         batch = self.datapoints[idx * self.batch_size : (idx+1) * self.batch_size]
         # batch_x = np.array(list(map(lambda x: x.image_path, batch)))
         images = list(map(lambda x: x.get_image(), batch))
@@ -55,8 +59,9 @@ class DataBatcher(Sequence):
 
         batch_x = np.array(images)
         batch_x = (batch_x.reshape(self.batch_size, -1) - batch_x.mean()) / batch_x.std()
+
         batch_y = np.array(rectangles)
-        print('getitem (debug) :', type(batch_x), len(batch_x))
+        # print('getitem (debug) :', type(batch_x), len(batch_x))
         return batch_x, batch_y
 
 
@@ -68,7 +73,7 @@ def trainTestSplitDatapoints(datapoints, test_size=0.2):
 
 
 if __name__ == '__main__':
-    datapoints = utils.prepareDataPoints('../../DataRaw')[:100]
+    datapoints = utils.prepareDataPoints('../../DataRaw')[:20]
     n_batches = 10
 
     train_set, test_set = trainTestSplitDatapoints(datapoints)
@@ -78,12 +83,13 @@ if __name__ == '__main__':
 
     # x_shape = utils.readImage(datapoints[0].image_path).shape[-1]
     # y_shape = datapoints[0].rect.to_numpy().shape[-1]
-    print(train_seq[0][0].shape, train_seq[0][1].shape)
-    image = train_seq[0][0][0]
+    # print(train_seq[0][0].shape, train_seq[0][1].shape)
+    # image = train_seq[0][0][0]
     # print(type(train_seq[0]), type(train_seq[0][0]), train_seq[0][0].shape)
-    print(type(image), image.shape, type(image))
+    # print(type(image), image.shape, type(image))
     # print(train_seq[0], type(train_seq[0]))
     # some_x, some_y = train_seq[0]
+
     some_x_batch, some_y_batch = train_seq[0]
     print(some_x_batch.shape, some_y_batch.shape)
     some_x, some_y = some_x_batch[0], some_y_batch[0]
