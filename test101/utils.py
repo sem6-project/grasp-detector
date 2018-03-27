@@ -28,7 +28,8 @@ class DataPoint(object):
         self.rect = rect
 
     def get_image(self):
-        return cv2.imread(self.image_path)
+        # return cv2.imread(self.image_path)
+        return cv2.imread(self.image_path, cv2.COLOR_BGR2GRAY)
 
     def __str__(self):
         return f'DataPoint({self.rect})'
@@ -38,7 +39,8 @@ class DataPoint(object):
 
 
 def readImage(image_path):
-    return cv2.imread(image_path)
+    # return cv2.imread(image_path)
+    return cv2.imread(self.image_path, cv2.COLOR_BGR2GRAY)
 
 
 def getRectangles(coords):
@@ -86,7 +88,7 @@ def prepareDataPoints(raw_data_path):
     datapoints = []
 
     for each in fileMap.values():
-        rgb_img = each['rgb']
+        # rgb_img = each['rgb']
         gray_img = each['gray']
         pos_rect_file = each['pos_rect']
         # image = cv2.imread(gray_img)
