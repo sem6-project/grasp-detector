@@ -5,9 +5,15 @@
 * Another neural network identifies the rectangles.
 
 ## Difference from previous work
-Previous work had the rectangles already available. All they did was to train a neural network to tell if the rectangle is a good rectangle or bad rectangle.
+- Previous work had the rectangles already available. All they did was to train a neural network to tell if the rectangle is a good rectangle or bad rectangle.
+- Our works is based on finding the rectangle.
+- Batch the dataset rather than passing it completely at once.
 
-Our works is based on finding the rectangle.
+## Input/Output description
+**Input** > `Fixed size image in linear form`. Since, all images in `DataRaw` are of same dimension, this helps.
+Later on, the images in `DataRaw` are to be replaced by output of `Detectron** for each image.
+
+**Output**  > `1x4 vector` describing a rectangle `(length, breadth, width, height)`. (obtained from `*cpos.txt files`)
 
 ## Plan of action
 
