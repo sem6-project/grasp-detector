@@ -1,4 +1,4 @@
-# 2018 work - Not a SCAM
+# 2018 work 
 
 ## How this will work?
 * Detectron helps identify the object.
