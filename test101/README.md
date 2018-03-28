@@ -23,3 +23,11 @@ and https://github.com/jrieke/shape-detection/blob/master/multiple-rectangles.ip
 
     This test will have image path and rectangle only.
     If there are mutiple rectangles for an image, they will be kept as different entries in this test.
+    
+    
+### What's to be done?
+-[ ] Run this neural network as a proof of concept for this guessing game.
+-[ ] Replace this neural network by a convolutional network (refer to [CIFAR Keras example](https://github.com/keras-team/keras/blob/master/examples/cifar10_cnn.py) for reference)
+-[ ] Change this to persist the model on hard drive
+-[ ] Prepare another dataset based on Detectron's output (which will be masked object padded to make fixed size inputs)
+-[ ] Tune and optimize this network
