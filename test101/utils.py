@@ -1,16 +1,34 @@
 import os
 import cv2
 import numpy as np
+import math
+
+
+def IOU(bbox1, bbox2):
+    '''Calculates overlap b/w two rectangles'''
+    x1, y1, w1, h1 = bbox1[0], bbox1[1], bbox1[2], bbox1[3]
+    x2, y2, w2, h2 = bbox2[0], bbox2[1], bbox2[2], bbox2[3]
+    w_I = min(x1+w1, x2+w2) - max(x1, x2)
+    h_I = min(y1+h1, y2+h2) - max(y1, y2)
+
+    if w_I <= 0 or h_I <= 0: # no overlap
+        return 0
+
+    I = w_I * h_I
+    U = w1*h1 + w2*h2 - I
+    return I / U
+
 
 class Rectangle(object):
-    def __init__(self, x, y, w, h):
+    def __init__(self, x, y, w, h, t):
         self.x = x
         self.y = y
         self.w = w
         self.h = h
+        self.t = t
 
     def to_tuple(self):
-        return (self.x, self.y, self.w, self.h)
+        return (self.x, self.y, self.w, self.h, self.t)
 
     def to_numpy(self):
         return np.array(self.to_tuple())
@@ -43,6 +61,10 @@ def readImage(image_path):
     return cv2.imread(self.image_path, cv2.COLOR_BGR2GRAY)
 
 
+def euclideanDistance(x1, y1, x2, y2):
+    return math.sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1))
+
+
 def getRectangles(coords):
     X = [0, 0, 0, 0]
     Y = [0, 0, 0, 0]
@@ -51,9 +73,15 @@ def getRectangles(coords):
         x, y = float(c[0]), float(c[1])
         X[i], Y[i] = x, y
         if (i+1) % 4 == 0:
-            W = X[3] - X[0]
-            H = Y[3] - Y[0]
-            yield Rectangle(X[0], Y[0], W, H)
+            W = euclideanDistance(X[0], Y[0], X[1], Y[1])
+            H = euclideanDistance(X[0], Y[0], X[3], Y[3])
+            T = 0
+            try:
+                T = math.atan((Y[1] - Y[0]) / (X[1] - X[0]))
+            except ZeroDivisionError:
+                T = 0
+
+            yield Rectangle(X[0], Y[0], W, H, T)
 
 
 def prepareDataPoints(raw_data_path):
