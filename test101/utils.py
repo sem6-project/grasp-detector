@@ -2,6 +2,7 @@ import os
 import cv2
 import numpy as np
 import math
+import itertools
 
 
 def IOU(bbox1, bbox2):
@@ -20,12 +21,14 @@ def IOU(bbox1, bbox2):
 
 
 class Rectangle(object):
-    def __init__(self, x, y, w, h, t):
+    def __init__(self, x, y, w, h, t, coords):
         self.x = x
         self.y = y
         self.w = w
         self.h = h
         self.t = t
+        # in case actual coordinates are required
+        self.coordinates = coords
 
     def to_tuple(self):
         return (self.x, self.y, self.w, self.h, self.t)
@@ -65,6 +68,25 @@ def euclideanDistance(x1, y1, x2, y2):
     return math.sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1))
 
 
+def reorderCoordinates(X, Y):
+    sortingKey = lambda I: euclideanDistance(I[0][0], I[0][1], I[1][0], I[1][1])
+    d1, d2 = sorted(itertools.combinations(zip(X,Y), 2),
+                    key=sortingKey,
+                    reverse=True)[:2]
+
+    # have two diagonals going up to down
+    # first diagonal,... top coordinate up
+    d1 = sorted(d1, key=lambda I: I[1])   # sort with Y
+    # second diagonal,... top coordinate up
+    d2 = sorted(d2, key=lambda I: I[1])   # sort with Y
+
+    # get the left point first
+    d1, d2 = (d1, d2) if d1[0][0] < d2[0][0] else (d2, d1)
+
+    # just return the coordinates from the ordered diagonals
+    return [d1[0], d1[1], d2[0], d2[1]]
+
+
 def getRectangles(coords):
     X = [0, 0, 0, 0]
     Y = [0, 0, 0, 0]
@@ -73,15 +95,21 @@ def getRectangles(coords):
         x, y = float(c[0]), float(c[1])
         X[i], Y[i] = x, y
         if (i+1) % 4 == 0:
-            W = euclideanDistance(X[0], Y[0], X[1], Y[1])
-            H = euclideanDistance(X[0], Y[0], X[3], Y[3])
+            # the coordinates need to be reordered
+            # ordering - clockwise starting from top left point
+            coords = reorderCoordinates(X, Y)
+            W = euclideanDistance(coords[0][0], coords[0][1],
+                                  coords[1][0], coords[1][1])
+            H = euclideanDistance(coords[0][0], coords[0][1],
+                                  coords[3][0], coords[3][1])
             T = 0
             try:
-                T = math.atan((Y[1] - Y[0]) / (X[1] - X[0]))
+                # T = (y2-y1) / (x2-x1)
+                T = math.atan((coords[1][1] - coords[0][1]) / (coords[1][0] - coords[0][0]))
             except ZeroDivisionError:
                 T = 0
 
-            yield Rectangle(X[0], Y[0], W, H, T)
+            yield Rectangle(coords[0][0], coords[0][1], W, H, T, coords)
 
 
 def prepareDataPoints(raw_data_path):
@@ -143,8 +171,16 @@ def loadPickledDataPoints(source_file):
 
 def storeDataPoints(datapoints, dest_file):
     import json
+    data = []
+    for each in datapoints:
+        image_path = each.image_path
+        data.append({
+            'image_path': image_path,
+            'rectangle': each.rect.to_tuple()
+        })
+
     with open(dest_file, 'w') as f:
-        f.write(json.dumps(datapoints))
+        f.write(json.dumps(data, indent=2))
 
 
 def loadJsonDataPoints(source_file):
@@ -161,6 +197,13 @@ if __name__ == '__main__':
     dest_json = 'datapoints.json'
     datapoints = prepareDataPoints(data_path)
     print('prepared datapoints of length', len(datapoints))
+
+    consent = input('Save datapoints to datapoints.json ? (y / n) ')
+    if consent.lower() == 'y':
+        print('saving')
+        storeDataPoints(datapoints, dest_json)
+    else:
+        print('not saving')
 
     # pickleDataPoints(datapoints, dest_file)
     # storeDataPoints(datapoints, dest_json)
