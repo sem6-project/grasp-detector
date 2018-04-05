@@ -3,20 +3,35 @@ import itertools
 from copy import deepcopy
 from random import shuffle
 import numpy as np
-from keras.models import Sequential
-from keras.layers import Dense, Activation, Dropout
-from keras.optimizers import SGD
-from keras.utils import Sequence
-from sklearn.model_selection import train_test_split
 
 from keras.models import Sequential
-from keras.layers import Dense, Activation, Dropout
-from keras.optimizers import SGD
+from keras.layers import Dense, Activation, Dropout, Flatten
+from keras.layers import Conv2D, MaxPooling2D
+from keras.optimizers import SGD, rmsprop
+from keras.utils import Sequence
+import keras.backend as K
+
+from sklearn.model_selection import train_test_split
 
 import utils
 
 
-def prepareModel(x_shape, y_shape):
+def rectangle_guessing_loss(y_true, y_pred):
+    y_true_np = K.eval(y_true)
+    y_pred_np = K.eval(y_pred)
+    y_true_iter = np.nditer(y_true_np, order='C')
+    y_pred_iter = np.nditer(y_pred_np, order='C')
+    loss = 0.0
+    count = 0
+    for y1, y2 in zip(y_true_iter, y_pred_iter):
+        loss += utils.IOU(y1, y2)
+        count += 1
+
+    return (loss / count)
+
+
+
+def prepareExampleModel(x_shape, y_shape):
     print('preparing model: x_shape >', x_shape, 'y_shape >', y_shape)
     model = Sequential([
         Dense(200, input_dim=x_shape),
@@ -24,7 +39,45 @@ def prepareModel(x_shape, y_shape):
         Dropout(0.2),
         Dense(y_shape)
     ])
+    # model.compile('adadelta', loss=rectangle_guessing_loss)
+    # model.compile('adadelta', 'cosine_proximity')
     model.compile('adadelta', 'mse')
+    return model
+
+
+def prepareConvModel(x_shape, y_shape, batch_size):
+    print('preparing model with shape', x_shape, y_shape)
+
+    model = Sequential([
+    Conv2D(batch_size, (3, 3), padding='same', input_shape=(486,))
+        # Conv2D(32, (3, 3), padding='same', input_shape=x_shape),
+        # Activation('relu'),
+
+        # Conv2D(32, (3, 3)),
+        # Activation('relu'),
+
+        # MaxPooling2D(pool_size=(2,2)),
+        # Dropout(0.25),
+
+        # Conv2D(64, (3, 3), padding='same'),
+        # Activation('relu'),
+
+        # Conv2D(64, (3, 3)),
+        # Activation('relu'),
+
+        # MaxPooling2D(pool_size=(2, 2)),
+        # Dropout(0.25),
+
+        # Flatten(),
+        # Dense(512),
+        # Activation('relu'),
+        # Dropout(0.25),
+        # Dense(y_shape),
+        # Activation('softmax')
+    ])
+
+    opt = rmsprop(lr=0.0001, decay=1e-6)
+    model.compile(loss='mse', optimizer=opt, metrics=['accuracy'])
     return model
 
 
@@ -58,7 +111,8 @@ class DataBatcher(Sequence):
         #                             batch)))
 
         batch_x = np.array(images)
-        batch_x = (batch_x.reshape(self.batch_size, -1) - batch_x.mean()) / batch_x.std()
+        # batch_x = batch_x.reshape(len(batch), -1)
+        # batch_x = (batch_x.reshape(self.batch_size, -1) - batch_x.mean()) / batch_x.std()
 
         batch_y = np.array(rectangles)
         # print('getitem (debug) :', type(batch_x), len(batch_x))
@@ -72,31 +126,71 @@ def trainTestSplitDatapoints(datapoints, test_size=0.2):
     return dp_copy[:marker], dp_copy[marker:]
 
 
-if __name__ == '__main__':
-    datapoints = utils.prepareDataPoints('../../DataRaw')[:20]
-    n_batches = 10
+def determineBatchSize(train_size, test_size):
+    n_total = min(train_size, test_size)
+    # try to keep 50 images in a batch
+    n_per_batch = 50
+    n_batches = math.ceil(n_total / n_per_batch)
+    return n_batches, n_per_batch
+
+
+def determineModelShape(some_batch):
+    some_x_batch, some_y_batch = some_batch
+    some_x, some_y = some_x_batch[0], some_y_batch[0]
+    # x_shape, y_shape = some_x.shape[-1], some_y.shape[-1]
+    x_shape, y_shape = some_x.shape, some_y.shape
+    return x_shape, y_shape
+
+
+def main():
+    import sys
+
+    try:
+        dataRawDir = sys.argv[1]
+        nImages = int(sys.argv[2])
+        epochs = int(sys.argv[3])
+    except IndexError:
+        dataRawDir = '../../DataRaw'
+        nImages = 10
+        epochs = 1
+
+    # shit happens here
+    datapoints          = utils.prepareDataPoints(dataRawDir)[:nImages]
 
     train_set, test_set = trainTestSplitDatapoints(datapoints)
+    n_batches, n_images_per_batch  = determineBatchSize(len(train_set), len(test_set))
 
-    train_seq = DataBatcher(train_set, batch_size=int(len(train_set) / n_batches))
-    test_seq = DataBatcher(test_set, batch_size=int(len(test_set) / n_batches))
+    train_seq           = DataBatcher(train_set, batch_size=int(len(train_set) / n_batches))
+    test_seq            = DataBatcher(test_set, batch_size=int(len(test_set) / n_batches))
 
-    # x_shape = utils.readImage(datapoints[0].image_path).shape[-1]
-    # y_shape = datapoints[0].rect.to_numpy().shape[-1]
-    # print(train_seq[0][0].shape, train_seq[0][1].shape)
-    # image = train_seq[0][0][0]
-    # print(type(train_seq[0]), type(train_seq[0][0]), train_seq[0][0].shape)
-    # print(type(image), image.shape, type(image))
-    # print(train_seq[0], type(train_seq[0]))
-    # some_x, some_y = train_seq[0]
+    import pdb; pdb.set_trace()
 
-    some_x_batch, some_y_batch = train_seq[0]
-    print(some_x_batch.shape, some_y_batch.shape)
-    some_x, some_y = some_x_batch[0], some_y_batch[0]
-    x_shape, y_shape = some_x.shape[-1], some_y.shape[-1]
-    model = prepareModel(x_shape, y_shape)
+    x_shape, y_shape    = determineModelShape(train_seq[0])
 
-    retval = model.fit_generator(train_seq,
-                                 validation_data=test_seq,
-                                 epochs=1, verbose=2)
+    # model               = prepareModel(x_shape, y_shape)
+    # model               = prepareExampleModel(x_shape, y_shape)
+    print('testing last element of batch sequence ', 'train_seq', not(not(train_seq[-1])), 'test_seq', not(not(test_seq[-1])))
+
+    model               = prepareConvModel(x_shape, y_shape, n_images_per_batch)
+
+    retval              = model.fit_generator(train_seq,
+                                              validation_data=test_seq,
+                                              epochs=epochs, verbose=2)
     print(retval)
+
+    # evaluating the results
+    y_pred = model.predict(test_seq[0][0])
+    # calculate mean IOU
+    total_IOU = 0
+    for bbox_pred, bbox_test in zip(
+            y_pred.reshape(-1, 5), test_seq[0][1].reshape(-1, 5)
+    ):
+        total_IOU += utils.IOU(bbox_pred, bbox_test)
+
+    mean_IOU = total_IOU / len(y_pred)
+    print('mean IOU', mean_IOU)
+
+
+
+if __name__ == '__main__':
+    main()
