@@ -7,6 +7,8 @@ import math
 import itertools
 import cv2
 import numpy as np
+from copy import deepcopy
+import random
 
 
 class Point(object):
@@ -149,6 +151,16 @@ def prepare_datapoints(data_raw_path='../../DataRaw', force_gray=True) -> list:
     print('Prepared', len(datapoints), 'datapoints')
 
     return datapoints
+
+
+def train_test_split_datapoints(datapoints :list, test_size=0.2) -> list:
+    dp_copy = deepcopy(datapoints)
+    random.shuffle(dp_copy)
+    n_test = math.floor(len(dp_copy) * 0.2)
+    n_train = len(dp_copy) - n_test
+    train_datapoints = dp_copy[:n_train]
+    test_datapoints = dp_copy[n_train:]
+    return train_datapoints, test_datapoints
 
 
 
