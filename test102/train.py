@@ -128,23 +128,23 @@ def main():
     train_datapoints, test_datapoints = \
         utils.train_test_split_datapoints(datapoints, test_size=0.2)
 
-    train_loader = torch.utils.data.DataLoader(
-        datasets.MNIST('../data', train=True, download=True,
-                    transform=transforms.Compose([
-                        transforms.ToTensor(),
-                        transforms.Normalize((0.1307,), (0.3081,))
-                    ])),
-        batch_size=args.batch_size, shuffle=True, **kwargs)
+    # train_loader = torch.utils.data.DataLoader(
+    #     datasets.MNIST('../data', train=True, download=True,
+    #                 transform=transforms.Compose([
+    #                     transforms.ToTensor(),
+    #                     transforms.Normalize((0.1307,), (0.3081,))
+    #                 ])),
+    #     batch_size=args.batch_size, shuffle=True, **kwargs)
     
-    test_loader = torch.utils.data.DataLoader(
-        datasets.MNIST('../data', train=False, transform=transforms.Compose([
-                        transforms.ToTensor(),
-                        transforms.Normalize((0.1307,), (0.3081,))
-                    ])),
-        batch_size=args.test_batch_size, shuffle=True, **kwargs)
+    # test_loader = torch.utils.data.DataLoader(
+    #     datasets.MNIST('../data', train=False, transform=transforms.Compose([
+    #                     transforms.ToTensor(),
+    #                     transforms.Normalize((0.1307,), (0.3081,))
+    #                 ])),
+    #     batch_size=args.test_batch_size, shuffle=True, **kwargs)
 
-    # train_loader = CornellDataLoader(train_datapoints)
-    # test_loader = CornellDataLoader(test_datapoints)
+    train_loader = CornellDataLoader(train_datapoints)
+    test_loader = CornellDataLoader(test_datapoints)
    
     model = Net()
     if args.cuda:
