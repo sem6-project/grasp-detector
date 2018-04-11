@@ -46,7 +46,7 @@ class DataPoint(object):
 
     def get_image(self, force_gray=True) -> np.array:
         img = cv2.imread(self.image_path, cv2.COLOR_BGR2GRAY)
-        if force_gray:
+        if force_gray and len(img.shape) is 3:
             try:
                 img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
                 return img_gray
@@ -65,8 +65,11 @@ class DataPoint(object):
         height = euclidean_distance(self.vertices[1], self.vertices[2])
         inclination = get_rectangle_inclination(self.vertices)
 
+        # return np.array(
+        #     [center_of_rect.x, center_of_rect.y, width, height, inclination]
+        # )
         return np.array(
-            [center_of_rect.x, center_of_rect.y, width, height, inclination]
+             [self.vertices[0].x, self.vertices[0].y, width, height, inclination]
         )
 
     @property
@@ -78,9 +81,24 @@ class DataPoint(object):
         return self.get_rectangle()
 
 
+def get_rectangle_vertices(Y :tuple) -> tuple:
+    x1, y1, w, h, inclination = Y
+    radian = degree_to_radian(inclination)
+    sin_theta, cos_theta = math.sin(radian), math.cos(radian)
+    x2, y2 = (x1 + w*cos_theta), (y1 + w*sin_theta)
+    x4, y4 = (x1 + h*sin_theta), (y1 + h*cos_theta)
+    x3, y3 = (x4 + w*cos_theta), (y4 + w*sin_theta)
+
+    return ((x1, y1), (x2, y2), (x3, y3), (x4, y4))
+
+
 def euclidean_distance(pt_1 :Point, pt_2 :Point) -> float:
     square = lambda n: (n) * (n)
     return math.sqrt(square(pt_1.x - pt_2.x) + square(pt_1.y - pt_2.y))
+
+
+def degree_to_radian(degree :float) -> float:
+    return degree * math.pi / 180
 
 
 def get_rectangle_inclination(vertices :list) -> float:
