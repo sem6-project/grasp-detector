@@ -73,9 +73,12 @@ class DataPoint(object):
         # return np.array(
         #     [center_of_rect.x, center_of_rect.y, width, height, inclination]
         # )
+        # return np.array(
+        #      [self.vertices[0].x, self.vertices[0].y, width, height, inclination]
+        # )
         return np.array(
-             [self.vertices[0].x, self.vertices[0].y, width, height, inclination]
-        )
+            [(vertex.x, vertex.y) for vertex in self.vertices[:3]]
+        ).reshape(-1)
 
     @property
     def X(self):
@@ -104,19 +107,36 @@ class DataPoint(object):
 
 
 def get_rectangle_vertices(Y :tuple) -> tuple:
-    x1, y1, w, h, theta = Y
+    # ------------------------------------------------------
+    # first solution : use 1x5 vector : trigonometry
+    # ------------------------------------------------------
+    # x1, y1, w, h, theta = Y
     # radian = degree_to_radian(inclination)
     # sin_theta, cos_theta = math.sin(radian), math.cos(radian)
     # x2, y2 = (x1 + w*cos_theta), (y1 + w*sin_theta)
     # x4, y4 = (x1 + h*sin_theta), (y1 + h*cos_theta)
     # x3, y3 = (x4 + w*cos_theta), (y4 + w*sin_theta)
+    # ------------------------------------------------------
 
-    angle_1 = degree_to_radian(theta)
-    angle_2 = angle_1 + math.pi*0.75
+    # ------------------------------------------------------
+    # second solution : use 1x5 vector - trignometry changed
+    # ------------------------------------------------------
+    # x1, y1, w, h, theta = Y
+    # angle_1 = degree_to_radian(theta)
+    # angle_2 = angle_1 + math.pi*0.75
 
-    x2, y2 = (x1 + w * math.cos(angle_1)), (y1 + w * math.sin(angle_1))
-    x4, y4 = (x1 + h * math.cos(angle_2)), (y1 + w * math.sin(angle_2))
-    x3, y3 = (x2 + x4 - x1), (y2 + y4 - y1)
+    # x2, y2 = (x1 + w * math.cos(angle_1)), (y1 + w * math.sin(angle_1))
+    # x4, y4 = (x1 + h * math.cos(angle_2)), (y1 + w * math.sin(angle_2))
+    # x3, y3 = (x2 + x4 - x1), (y2 + y4 - y1)
+    #
+    # ------------------------------------------------------
+
+    # ------------------------------------------------------
+    # third solution : use three points
+    # ------------------------------------------------------
+    x1, y1, x2, y2, x3, y3 = Y
+    x4, y4 = (x1 + x3 - x2), (y1 + y3 - y2)
+    # ------------------------------------------------------
 
     return ((x1, y1), (x2, y2), (x3, y3), (x4, y4))
 

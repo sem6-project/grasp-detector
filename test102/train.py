@@ -68,6 +68,7 @@ class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
         self._fc1_size = 37 * 27 * 30  # 29970
+        self._fc2_size = 6
 
         self.conv1 = nn.Conv2d(1, 5, kernel_size=5)
         self.conv2 = nn.Conv2d(5, 10, kernel_size=3)
@@ -76,7 +77,7 @@ class Net(nn.Module):
         # self.conv2_drop = nn.Dropout2d()
 
         self.fc1 = nn.Linear(self._fc1_size, 500)
-        self.fc2 = nn.Linear(500, 5)
+        self.fc2 = nn.Linear(500, self._fc2_size)
 
     def forward(self, x):
         # convolution and dropouts
@@ -149,17 +150,17 @@ def test(model, test_loader, optimizer, args):
 
 def visualize_result(datapoints :list, model :Net, cuda :bool, target_dir :str) -> None:
     viz_loader = CornellDataLoader(datapoints)
-    get_fname = lambda fpath: f'result-{os.path.basename(fpath)}'
+    get_fname = lambda finfo: f'result{finfo[0]}-{os.path.basename(finfo[1])}'
     get_target_file = lambda fpath: os.path.join(target_dir, get_fname(fpath))
 
-    for idx, (data, target) in enumerate(viz_loader):
+    for idx, (data, _) in enumerate(viz_loader):
         data = Variable(data, volatile=True)  # dunno why
         if cuda:  data = data.cuda()
         dp = datapoints[idx]
         prediction = model(data).data
         # prediction = tuple(prediction.cpu().data)
-        target_file = get_target_file(dp.rgb_image_path)
-        dp.visualize_result(prediction, target_file)
+        target_file = get_target_file((idx, dp.rgb_image_path))
+        dp.visualize_result(prediction, target_file, gray=False)
 
         print('\r:: Visualize result : ({}/{} {:.2f} %)'.format(
             idx+1, len(datapoints), ((idx+1)/len(datapoints))*100
@@ -203,27 +204,27 @@ def main():
         test(model, test_loader, optimizer, args)
 
 
-    data, target = test_loader[0]
-    if args.cuda:
-        data, target = data.cuda(), target.cuda()
-    data, target = Variable(data, volatile=True), Variable(target)
-    image = data.view(480, 640).cpu().data.numpy().astype('uint8')
-    output = model(data)
+    # data, target = test_loader[0]
+    # if args.cuda:
+    #     data, target = data.cuda(), target.cuda()
+    # data, target = Variable(data, volatile=True), Variable(target)
+    # image = data.view(480, 640).cpu().data.numpy().astype('uint8')
+    # output = model(data)
 
-    pred = np.array(utils.get_rectangle_vertices(tuple(output.data)), np.int32)
-    actual = np.array(utils.get_rectangle_vertices(tuple(target.data)), np.int32)
+    # pred = np.array(utils.get_rectangle_vertices(tuple(output.data)), np.int32)
+    # actual = np.array(utils.get_rectangle_vertices(tuple(target.data)), np.int32)
 
-    print('actual rectangle', actual)
-    print('predicted rectangle', pred)
+    # print('actual rectangle', actual)
+    # print('predicted rectangle', pred)
 
     # pred = utils.get_rectangle_vertices(list(output.data))
     # actual = utils.get_rectangle_vertices(list(target.data))
 
-    import cv2
-    cv2.imwrite('original.png', image)
-    cv2.polylines(image, [actual], True, (0, 255, 0));
-    cv2.polylines(image, [pred], True, (255, 0, 0));
-    cv2.imwrite('detected.png', image)
+    # import cv2
+    # cv2.imwrite('original.png', image)
+    # cv2.polylines(image, [actual], True, (0, 255, 0));
+    # cv2.polylines(image, [pred], True, (255, 0, 0));
+    # cv2.imwrite('detected.png', image)
 
     target_dir = os.path.abspath('./predictions')
     try:
