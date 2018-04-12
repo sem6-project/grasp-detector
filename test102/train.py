@@ -137,7 +137,7 @@ def test(model, test_loader, optimizer, args):
     # print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
     #     test_loss, correct, len(test_loader),
     #     100. * correct / len(test_loader)))
-    
+
     return 1-test_loss
 
 
@@ -156,7 +156,7 @@ def main():
     #                     transforms.Normalize((0.1307,), (0.3081,))
     #                 ])),
     #     batch_size=args.batch_size, shuffle=True, **kwargs)
-    
+
     # test_loader = torch.utils.data.DataLoader(
     #     datasets.MNIST('../data', train=False, transform=transforms.Compose([
     #                     transforms.ToTensor(),
@@ -166,33 +166,39 @@ def main():
 
     train_loader = CornellDataLoader(train_datapoints)
     test_loader = CornellDataLoader(test_datapoints)
-   
+
     model = Net()
     if args.cuda:
         model.cuda()
 
     optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum)
-    
+
     for epoch in range(1, args.epochs + 1):
         train(model, train_loader, optimizer, args, epoch)
         test(model, test_loader, optimizer, args)
 
-    
-   #  data, target = test_loader[0]
-   #  if args.cuda:
-   #      data, target = data.cuda(), target.cuda()
-   #  data, target = Variable(data, volatile=True), Variable(target)
-   #  image = data.view(480, 640).numpy()
-   #  output = model(data)
-   #  
-   #  pred = utils.get_rectangle_vertices(list(output))
-   #  actual = utils.get_rectangle_vertices(list(target))
 
-   #  import cv2
-   #  cv2.imwrite('original.png', image)
-   #  cv2.polylines(image, list(actual), True, (0, 255, 0));
-   #  cv2.polylines(image, list(pred), True, (255, 0, 0));
-   #  cv2.imwrite('detected.png', image);
+    data, target = test_loader[0]
+    if args.cuda:
+        data, target = data.cuda(), target.cuda()
+    data, target = Variable(data, volatile=True), Variable(target)
+    image = data.view(480, 640).cpu().data.numpy().astype('uint8')
+    output = model(data)
+
+    pred = np.array(utils.get_rectangle_vertices(tuple(output.data)), np.int32)
+    actual = np.array(utils.get_rectangle_vertices(tuple(target.data)), np.int32)
+
+    print('actual rectangle', actual)
+    print('predicted rectangle', pred)
+
+    # pred = utils.get_rectangle_vertices(list(output.data))
+    # actual = utils.get_rectangle_vertices(list(target.data))
+
+    import cv2
+    cv2.imwrite('original.png', image)
+    cv2.polylines(image, [actual], True, (0, 255, 0));
+    cv2.polylines(image, [pred], True, (255, 0, 0));
+    cv2.imwrite('detected.png', image);
 
 
 if __name__=='__main__':
