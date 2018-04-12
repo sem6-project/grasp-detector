@@ -36,25 +36,30 @@ class Point(object):
 
 
 class DataPoint(object):
-    def __init__(self, image_path :str, vertices :list):
+    def __init__(self, rgb_image_path :str, gray_image_path :str, vertices :list):
         '''Parameters:
-            image_path : str : path to the image
+            rgb_image_path : str : path to the image
+            gray_image_path : str : path to the image
             vertices: str : list of :Point:
         '''
-        self.image_path = image_path
+        self.rgb_image_path = rgb_image_path
+        self.gray_image_path = gray_image_path
+        self.image_path = self.gray_image_path
         self.vertices = vertices
 
-    def get_image(self, force_gray=True) -> np.array:
-        img = cv2.imread(self.image_path, cv2.COLOR_BGR2GRAY)
-        if force_gray and len(img.shape) is 3:
-            try:
-                img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-                return img_gray
-            except cv2.error:
-                # happens when converting gray images to gray
-                # as they don't have three dimension
-                pass
-        return img
+    def get_image(self, gray=True) -> np.array:
+        # img = cv2.imread(self.image_path, cv2.COLOR_BGR2GRAY)
+        # if force_gray and len(img.shape) is 3:
+        #     try:
+        #         img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        #         return img_gray
+        #     except cv2.error:
+        #         # happens when converting gray images to gray
+        #         # as they don't have three dimension
+        #         pass
+        if gray:
+            return cv2.imread(self.gray_image_path, cv2.COLOR_BGR2GRAY)
+        return cv2.imread(self.rgb_image_path)
 
 
     def get_rectangle(self) -> np.array:
@@ -74,11 +79,28 @@ class DataPoint(object):
 
     @property
     def X(self):
-        return self.get_image()
+        return self.get_image(gray=True)
 
     @property
     def Y(self):
         return self.get_rectangle()
+
+    def visualize_result(self, prediction :tuple, target_file :str,
+                         gray=True,
+                         actual_rect_color=(0, 0, 255),
+                         predicted_rect_color=(0, 255, 0),
+                         rect_thickness=2) -> None:
+        '''Visualize the actual and predicted rectangle on RGB image
+        '''
+        # image = self.get_image(gray=False)
+        image = self.get_image(gray=gray)
+        predicted_rect = np.array(get_rectangle_vertices(prediction), np.int32)
+        actual_rect = np.array(get_rectangle_vertices(self.Y), np.int32)
+
+        cv2.polylines(image, [predicted_rect], True, predicted_rect_color, rect_thickness)
+        cv2.polylines(image, [actual_rect], True, actual_rect_color, rect_thickness)
+
+        cv2.imwrite(target_file, image)
 
 
 def get_rectangle_vertices(Y :tuple) -> tuple:
@@ -153,25 +175,24 @@ def read_cpos_file(filepath :str) -> list:
     return rectangles
 
 
-def prepare_datapoints(data_raw_path='../../DataRaw', force_gray=True) -> list:
-    if force_gray:
-        image_files = glob.glob(data_raw_path + '/*/*gray.png')
-    else:
-        image_files = glob.glob(data_raw_path + '/*/*r.png')
+def prepare_datapoints(data_raw_path='../../DataRaw') -> list:
+    gray_image_files = glob.glob(data_raw_path + '/*/*gray.png')
+    rgb_image_files = glob.glob(data_raw_path + '/*/*r.png')
 
     cpos_files = glob.glob(data_raw_path + '/*/*cpos.txt')
 
-    print('There are', len(image_files), 'image files and',
+    print('There are', len(rgb_image_files), 'image files and',
           len(cpos_files), 'cpos files')
 
     # convert relative paths to absolute paths
-    image_files = map(os.path.abspath, image_files)
+    rgb_image_files = map(os.path.abspath, rgb_image_files)
+    gray_image_files = map(os.path.abspath, gray_image_files)
     cpos_files = map(os.path.abspath, cpos_files)
 
     datapoints = list()
-    for image_file, cpos_file in zip(image_files, cpos_files):
+    for rgb_img_file, gray_img_file, cpos_file in zip(rgb_image_files, gray_image_files, cpos_files):
         for rect in read_cpos_file(cpos_file):
-            datapoints.append(DataPoint(image_file, rect))
+            datapoints.append(DataPoint(rgb_img_file, gray_img_file, rect))
 
     print('Prepared', len(datapoints), 'datapoints')
 

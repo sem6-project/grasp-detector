@@ -110,6 +110,12 @@ def train(model, train_loader, optimizer, args, epoch):
         loss = F.mse_loss(output, target)
         loss.backward()
         optimizer.step()
+
+        if str(loss.data[0]).strip().lower() == 'nan':
+            print('\nStuck somewhere in local minima :(')
+            print('I QUIT')
+            exit(1)
+
         if batch_idx % args.log_interval == 0:
             print('\rTrain Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                 epoch, batch_idx * len(data), len(train_loader),
@@ -139,6 +145,25 @@ def test(model, test_loader, optimizer, args):
     #     100. * correct / len(test_loader)))
 
     return 1-test_loss
+
+
+def visualize_result(datapoints :list, model :Net, cuda :bool, target_dir :str) -> None:
+    viz_loader = CornellDataLoader(datapoints)
+    get_fname = lambda fpath: f'result-{os.path.basename(fpath)}'
+    get_target_file = lambda fpath: os.path.join(target_dir, get_fname(fpath))
+
+    for idx, (data, target) in enumerate(viz_loader):
+        data = Variable(data, volatile=True)  # dunno why
+        if cuda:  data = data.cuda()
+        dp = datapoints[idx]
+        prediction = model(data).data
+        # prediction = tuple(prediction.cpu().data)
+        target_file = get_target_file(dp.rgb_image_path)
+        dp.visualize_result(prediction, target_file)
+
+        print('\r:: Visualize result : ({}/{} {:.2f} %)'.format(
+            idx+1, len(datapoints), ((idx+1)/len(datapoints))*100
+        ), end='')
 
 
 def main():
@@ -198,8 +223,15 @@ def main():
     cv2.imwrite('original.png', image)
     cv2.polylines(image, [actual], True, (0, 255, 0));
     cv2.polylines(image, [pred], True, (255, 0, 0));
-    cv2.imwrite('detected.png', image);
+    cv2.imwrite('detected.png', image)
 
+    target_dir = os.path.abspath('./predictions')
+    try:
+        os.makedirs(target_dir)
+    except FileExistsError:
+        pass
+
+    visualize_result(datapoints[:10], model, args.cuda, target_dir)
 
 if __name__=='__main__':
     main()
