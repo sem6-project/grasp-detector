@@ -18,16 +18,16 @@ class Point(object):
 
     def to_tuple(self) -> tuple:
         return (self.x, self.y)
-        
+
     def __add__(self, other):
         return Point(self.x+other.x, self.y+other.y)
 
     def __sub__(self, other):
         return Point(self.x-other.x, self.y-other.y)
-    
+
     def __mul__(self, scalar :float):
         return Point(self.x*scalar, self.y*scalar)
-    
+
     def __str__(self):
         return f'Point({self.x}, {self.y})'
 
@@ -60,7 +60,7 @@ class DataPoint(object):
     def get_rectangle(self) -> np.array:
         # could have done as mid point of a diagonal
         # but still, things are not much accurate
-        center_of_rect = (self.vertices[0] + self.vertices[1] + self.vertices[2] + self.vertices[3]) * 0.25
+        # center_of_rect = (self.vertices[0] + self.vertices[1] + self.vertices[2] + self.vertices[3]) * 0.25
         width = euclidean_distance(self.vertices[0], self.vertices[1])
         height = euclidean_distance(self.vertices[1], self.vertices[2])
         inclination = get_rectangle_inclination(self.vertices)
@@ -82,12 +82,19 @@ class DataPoint(object):
 
 
 def get_rectangle_vertices(Y :tuple) -> tuple:
-    x1, y1, w, h, inclination = Y
-    radian = degree_to_radian(inclination)
-    sin_theta, cos_theta = math.sin(radian), math.cos(radian)
-    x2, y2 = (x1 + w*cos_theta), (y1 + w*sin_theta)
-    x4, y4 = (x1 + h*sin_theta), (y1 + h*cos_theta)
-    x3, y3 = (x4 + w*cos_theta), (y4 + w*sin_theta)
+    x1, y1, w, h, theta = Y
+    # radian = degree_to_radian(inclination)
+    # sin_theta, cos_theta = math.sin(radian), math.cos(radian)
+    # x2, y2 = (x1 + w*cos_theta), (y1 + w*sin_theta)
+    # x4, y4 = (x1 + h*sin_theta), (y1 + h*cos_theta)
+    # x3, y3 = (x4 + w*cos_theta), (y4 + w*sin_theta)
+
+    angle_1 = degree_to_radian(theta)
+    angle_2 = angle_1 + math.pi*0.75
+
+    x2, y2 = (x1 + w * math.cos(angle_1)), (y1 + w * math.sin(angle_1))
+    x4, y4 = (x1 + h * math.cos(angle_2)), (y1 + w * math.sin(angle_2))
+    x3, y3 = (x2 + x4 - x1), (y2 + y4 - y1)
 
     return ((x1, y1), (x2, y2), (x3, y3), (x4, y4))
 
@@ -114,7 +121,7 @@ def reorder_vertices(vertices :tuple) -> tuple:
     sorting_key = lambda X: euclidean_distance(X[0], X[1])
     diag_1, diag_2 = sorted(itertools.combinations(vertices, 2),
                             key=sorting_key, reverse=True)[:2]
-    
+
     # we have two diagonals. They should be going down
     # first diagonal, top coordinate up
     diag_1 = sorted(diag_1, key=lambda pt: pt.y)
@@ -153,8 +160,8 @@ def prepare_datapoints(data_raw_path='../../DataRaw', force_gray=True) -> list:
         image_files = glob.glob(data_raw_path + '/*/*r.png')
 
     cpos_files = glob.glob(data_raw_path + '/*/*cpos.txt')
-    
-    print('There are', len(image_files), 'image files and', 
+
+    print('There are', len(image_files), 'image files and',
           len(cpos_files), 'cpos files')
 
     # convert relative paths to absolute paths
