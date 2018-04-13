@@ -1,18 +1,21 @@
 import os
 import sys
+from datetime import datetime
+import json
 import cv2
+import argparse
 import numpy as np
 from enum import Enum
 
 import utils
 
 
-N_INTENTS = 2
 RECT_COLOR = [
     (255, 0, 0),
     (66, 110, 26),
     (0, 0, 255)
 ]
+SHALL_QUIT = False
 
 
 class Cartographer(object):
@@ -33,6 +36,7 @@ class Cartographer(object):
 
     def cleanup(self) -> None:
         del self._image
+        self._image = None
 
     def track_events(self, event, x, y, flag, param) -> None:
         if event != cv2.EVENT_LBUTTONUP:
@@ -75,21 +79,106 @@ class Cartographer(object):
 
             if k == ord('q'):
                 if shall_quit == 1:
-                    sys.exit(0)
+                    global SHALL_QUIT
+                    SHALL_QUIT = True
+                    break
                 print('Press q again to quit')
                 shall_quit = 1
+
+            if k == ord('c'):
+                self.rectangles = []
+                self.current_rectangle = []
+                self.cleanup()
+
         cv2.destroyAllWindows()
         self.cleanup()
 
 
+def parse_args():
+    parser = argparse.ArgumentParser(description='Tool to label rectangles in image')
+    parser.add_argument(
+        '--data-dir',
+        dest='data_raw',
+        help='Path to DataRaw',
+        type=str
+    )
+    parser.add_argument(
+        '--output',
+        dest='output_file',
+        default='mappings.json',
+        help='Output file to save rectangles at',
+        type=str
+    )
+    if len(sys.argv) == 1:
+        parser.print_help()
+        sys.exit(1)
+    return parser.parse_args()
+
+
+def save_mappings(mapping :dict, output_file :str) -> None:
+    content = {
+        'timestamp': datetime.now().isoformat(),
+        'mapping': mapping
+    }
+    with open(output_file, 'w') as f:
+        f.write(json.dumps(content, indent=2))
+
+
+def read_mappings(filepath :str) -> dict:
+    with open(filepath) as f:
+        content = json.loads(f.read())
+    return content['mapping']
+
+
+def merge_mappings(original_mapping :dict, new_mapping :dict) -> dict:
+    mapping = {}
+    for k, v in original_mapping.items():
+        mapping[k] = v
+    for k, v in new_mapping.items():
+        mapping[k] = v
+    return mapping
+
+
 def main():
-    datapoints = utils.prepare_datapoints()
+    args = parse_args()
+    datapoints = utils.prepare_datapoints(args.data_raw)
     unique_datapoints = utils.filter_unique_datapoints(datapoints)
     cartographers = [Cartographer(dp, dp.image_name)
                      for dp in unique_datapoints]
 
+    print()
+    mapping = {}
+
     for c in cartographers:
         c.label_image()
+        mapping[c.image_name] = c.rectangles
+        if SHALL_QUIT:
+            break
+
+    output_file = args.output_file
+    if os.path.exists(args.output_file):
+        print('File already exists', output_file)
+        print('k : Quit')
+        print('o : Overwrite')
+        print('m : Merge')
+        print('n : Save in new file (default)')
+        whattodo = input('What to do? ').strip().lower()
+        if whattodo == 'o':
+            pass
+        if whattodo == 'k':
+            sys.exit(1)
+        elif whattodo == 'm':
+            original_mapping = read_mappings(output_file)
+            mapping = merge_mappings(original_mapping, mapping)
+        else:
+            dirpath = os.path.dirname(output_file)
+            filename = os.path.basename(output_file)
+            filename, ext = os.path.splitext(filename)
+            fileid = datetime.strftime(datetime.now(), '%d-%m-%H-%M-%S')
+            output_file = os.path.join(dirpath, filename+'-'+fileid+ext)
+
+    save_mappings(mapping, output_file)
+    print('Saved mappings to', output_file)
 
 
 if __name__ == '__main__':
