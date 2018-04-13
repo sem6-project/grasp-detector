@@ -1,10 +1,16 @@
 # This works
 
 ## Labelling tool
-Asks you to draw rectangles on each and every image in *DataRaw* and saves the mapping in a `json` file.
+Asks you to draw rectangles on each and every image in *DataRaw* and saves the mapping in a `json** file.
 
 * Asks 3 points for a given rectangle.
 * Can draw at most 3 rectangles on a given image.
+
+**Dependency**:
+Python3, OpenCV, Numpy
+```bash
+pip install opencv-python numpy
+```
 
 **Usage**:
 ```python3
