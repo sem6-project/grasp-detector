@@ -66,15 +66,21 @@ class Cartographer(object):
         sys.stdout.flush()
 
 
-    def label_image(self) -> None:
+    def label_image(self) -> bool:
         cv2.namedWindow(self.image_name)
         cv2.setMouseCallback(self.image_name, self.track_events)
         shall_quit = 0
         print('::', self.image_name)
+
+        interrupted = False
         while True:
             cv2.imshow(self.image_name, self.image)
             k = cv2.waitKey(1) & 0xFF
+            if k == ord('n'):
+                break
+
             if k == 27:
+                interrupted = True
                 break
 
             if k == ord('q'):
@@ -92,6 +98,7 @@ class Cartographer(object):
 
         cv2.destroyAllWindows()
         self.cleanup()
+        return not interrupted
 
 
 def parse_args():
@@ -150,8 +157,9 @@ def main():
     mapping = {}
 
     for c in cartographers:
-        c.label_image()
-        mapping[c.image_name] = c.rectangles
+        ok = c.label_image()
+        if ok:
+            mapping[c.image_name] = c.rectangles
         if SHALL_QUIT:
             break
 

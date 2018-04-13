@@ -51,7 +51,7 @@ class DataPoint(object):
     def image_name(self) -> str:
         filename = os.path.basename(self.image_path)
         name, _ = os.path.splitext(filename)
-        return name
+        return name.replace('gray', '')
 
     def get_image(self, gray=True) -> np.array:
         # img = cv2.imread(self.image_path, cv2.COLOR_BGR2GRAY)
@@ -235,7 +235,7 @@ def prepare_datapoints(data_raw_path='../../DataRaw') -> list:
 
 
 def filter_unique_datapoints(datapoints :list) -> list:
-    '''Get only one entr for a given image'''
+    '''Get only one entry for a given image'''
     return list(set(datapoints))
 
 
