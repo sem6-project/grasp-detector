@@ -47,6 +47,12 @@ class DataPoint(object):
         self.image_path = self.gray_image_path
         self.vertices = vertices
 
+    @property
+    def image_name(self) -> str:
+        filename = os.path.basename(self.image_path)
+        name, _ = os.path.splitext(filename)
+        return name
+
     def get_image(self, gray=True) -> np.array:
         # img = cv2.imread(self.image_path, cv2.COLOR_BGR2GRAY)
         # if force_gray and len(img.shape) is 3:
@@ -104,6 +110,15 @@ class DataPoint(object):
         cv2.polylines(image, [actual_rect], True, actual_rect_color, rect_thickness)
 
         cv2.imwrite(target_file, image)
+
+
+    def __hash__(self):
+        return hash(self.image_name)
+
+    def __eq__(self, other):
+        if not isinstance(other, type(self)):
+            return NotImplemented
+        return self.image_name == other.image_name
 
 
 def get_rectangle_vertices(Y :tuple) -> tuple:
@@ -217,6 +232,11 @@ def prepare_datapoints(data_raw_path='../../DataRaw') -> list:
     print('Prepared', len(datapoints), 'datapoints')
 
     return datapoints
+
+
+def filter_unique_datapoints(datapoints :list) -> list:
+    '''Get only one entr for a given image'''
+    return list(set(datapoints))
 
 
 def train_test_split_datapoints(datapoints :list, test_size=0.2) -> list:
