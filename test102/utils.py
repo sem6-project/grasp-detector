@@ -29,7 +29,7 @@ class Point(object):
         return Point(self.x*scalar, self.y*scalar)
 
     def __str__(self):
-        return f'Point({self.x}, {self.y})'
+        return 'Point({}, {})'.format(self.x, self.y)
 
     def __repr__(self):
         return self.__str__()
