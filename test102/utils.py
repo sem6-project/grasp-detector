@@ -9,6 +9,7 @@ import cv2
 import numpy as np
 from copy import deepcopy
 import random
+from sympy.geometry import Point, Line
 
 
 class Point(object):
@@ -181,6 +182,15 @@ def align_rectangle_point(x1, y1, x2, y2, x3, y3) -> tuple:
 
     print((x3, y3), '->', (x4, y4), 'with', m)
     return int(x4), int(y4)
+
+def align_rectangles_working(x1, y1, x2, y2, x3, y3):
+    line1 = Line(Point(x1,y1), Point(x2,y2))
+    line2 = line1.perpendicular_line(Point(x2,y2))
+    line3 = line2.perpendicular_line(Point(x3,y3))
+    # returns correct x3, y3 unlike the method above
+    # please generate x4, y4
+    # Return type is that of sympy Point
+    return line2.intersection(line3)
 
 
 def euclidean_distance(pt_1 :Point, pt_2 :Point) -> float:
