@@ -9,7 +9,7 @@ Asks you to draw rectangles on each and every image in *DataRaw* and saves the m
 **Dependency**:
 Python3, OpenCV, Numpy
 ```bash
-pip install opencv-python numpy
+pip3 install opencv-python numpy
 ```
 
 **Usage**:
