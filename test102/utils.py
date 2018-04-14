@@ -28,10 +28,10 @@ class Point(object):
     def __mul__(self, scalar :float):
         return Point(self.x*scalar, self.y*scalar)
 
-    def __str__(self):
-        return 'Point({}, {})'.format(self.x, self.y)
+    def __str__(self) -> str:
+        return str(self.to_tuple())
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return self.__str__()
 
 
@@ -154,6 +154,33 @@ def get_rectangle_vertices(Y :tuple) -> tuple:
     # ------------------------------------------------------
 
     return ((x1, y1), (x2, y2), (x3, y3), (x4, y4))
+
+
+def align_rectangle_point(x1, y1, x2, y2, x3, y3) -> tuple:
+    '''Re-aligns the third point among three points to form a rectangle
+
+    Let the fixed point be x4 and 4y
+    So, (y3 - y4)   (y2 - y1)
+        --------- = ---------  (parallel lines)
+        (x3 - x4) = (x2 - x1)
+    and
+        (y2 - y1)   (y4 - y2)
+        --------- x --------- = -1 (perpendicular lines)
+        (x2 - x1)   (x4 - x1)
+
+    Two equations, two unknowns
+    Edge cases : angle b/w two lines is pi/2
+    '''
+    try:
+        m = (y2 - y1) / (x2 - x1)
+        x4 = (x2 - y3*m + m*m*x3 + m*y2)
+        y4 = y3 - m * (x3 - x4)
+    except ZeroDivisionError:
+        x4 = x3
+        y4 = y2
+
+    print((x3, y3), '->', (x4, y4), 'with', m)
+    return int(x4), int(y4)
 
 
 def euclidean_distance(pt_1 :Point, pt_2 :Point) -> float:

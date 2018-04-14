@@ -44,18 +44,23 @@ class Cartographer(object):
 
         self.current_rectangle.append((x, y))
         intent = len(self.rectangles) + 1
+        color = RECT_COLOR[intent % len(RECT_COLOR)]
         print('\rIntent', intent, self.current_rectangle, end='')
 
-        cv2.circle(self.image, (x, y), 2, RECT_COLOR[intent-1], -1)
+        cv2.circle(self.image, (x, y), 2, color, -1)
 
         if len(self.current_rectangle) == 3:
             x1, y1 = self.current_rectangle[0]
             x2, y2 = self.current_rectangle[1]
             x3, y3 = self.current_rectangle[2]
+            # x3, y3 = utils.align_rectangle_point(
+            #     x1, y1, x2, y2, x, y
+            # )
+            self.current_rectangle[2] = (x3, y3)
             x4, y4 = int(x1+x3-x2), int(y1+y3-y2)
             self.current_rectangle.append((x4, y4))
 
-            cv2.polylines(self.image, [np.array(self.current_rectangle, np.int32)], True, RECT_COLOR[intent-1], 2)
+            cv2.polylines(self.image, [np.array(self.current_rectangle, np.int32)], True, color, 2)
 
             self.rectangles.append(
                 [(x1, y1), (x2, y2), (x3, y3), (x4, y4)]
