@@ -24,16 +24,9 @@ These keystrokes can be pressed while working on any image.
 | Keystroke | Action                                            |
 |-----------|---------------------------------------------------|
 | Esc       | Move to next image (discarding rectangles if any) |
-| n         | Move to next image (rectangles are ok) |
+| n         | Move to next image (rectangles are ok)            |
 | c         | Clear rectangles on an image                      |
-| q (twice) | Close GUI and save results          |
+| q (twice** | Close GUI and save results                        |
 
-
-**To handle duplicate files while saving results**:
-
-| Keystroke | Action    | What happens ?                       |
-|-----------|-----------|--------------------------------------|
-| o         | Overwrite | Replace old mappings with new ones   |
-| m         | Merge     | Merge both files (new over old ones) |
-| n         | New       | Save to a new file (automatically)   |
-| k         | Quit      | Quit without saving                  |
+**Note**: If you have already drawn rectangles for a given image, they will be shown if you view the image. You can either clear the image for new rectangles to be drawn or press 'n' to go to next image.
+This is a change from previous functioning where the mappings were merged.
