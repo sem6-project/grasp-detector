@@ -261,9 +261,11 @@ def prepare_datapoints(data_raw_path='../../DataRaw') -> list:
     return datapoints
 
 
-def filter_unique_datapoints(datapoints :list) -> list:
+def filter_unique_datapoints(datapoints :list, sort=True) -> list:
     '''Get only one entry for a given image'''
-    return list(set(datapoints))
+    if not sort:
+        list(set(datapoints))
+    return sorted(set(datapoints), key=lambda dp: dp.image_name)
 
 
 def train_test_split_datapoints(datapoints :list, test_size=0.2) -> list:
