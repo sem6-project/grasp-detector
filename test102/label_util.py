@@ -71,11 +71,18 @@ class Cartographer(object):
         sys.stdout.flush()
 
 
-    def label_image(self) -> bool:
+    def label_image(self, rectangles=[]) -> bool:
         cv2.namedWindow(self.image_name)
         cv2.setMouseCallback(self.image_name, self.track_events)
         shall_quit = 0
         print('::', self.image_name)
+
+        if rectangles:
+            self.rectangles = rectangles
+            for i, rect in enumerate(self.rectangles):
+                color = RECT_COLOR[i % len(RECT_COLOR)]
+                cv2.polylines(self.image, [np.array(rect, np.int32)], True, color, 2)
+            print(' > Rectangles already exist for this image. Press n to proceed or c to clear and redraw.')
 
         interrupted = False
         while True:
@@ -137,8 +144,11 @@ def save_mappings(mapping :dict, output_file :str) -> None:
 
 
 def read_mappings(filepath :str) -> dict:
-    with open(filepath) as f:
-        content = json.loads(f.read())
+    try:
+        with open(filepath) as f:
+            content = json.loads(f.read())
+    except FileNotFoundError:
+        content = {'mapping': {}}
     return content['mapping']
 
 
@@ -158,37 +168,20 @@ def main():
     cartographers = [Cartographer(dp, dp.image_name)
                      for dp in unique_datapoints]
 
+    output_file = args.output_file
+    mapping = read_mappings(output_file)
     print()
-    mapping = {}
 
     for c in cartographers:
-        ok = c.label_image()
+        if c.image_name in mapping:
+            ok = c.label_image(mapping[c.image_name])
+        else:
+            ok = c.label_image()
         if ok:
             mapping[c.image_name] = c.rectangles
         if SHALL_QUIT:
             break
 
-    output_file = args.output_file
-    if os.path.exists(args.output_file):
-        print('File already exists', output_file)
-        print('k : Quit')
-        print('o : Overwrite')
-        print('m : Merge')
-        print('n : Save in new file (default)')
-        whattodo = input('What to do? ').strip().lower()
-        if whattodo == 'o':
-            pass
-        if whattodo == 'k':
-            sys.exit(1)
-        elif whattodo == 'm':
-            original_mapping = read_mappings(output_file)
-            mapping = merge_mappings(original_mapping, mapping)
-        else:
-            dirpath = os.path.dirname(output_file)
-            filename = os.path.basename(output_file)
-            filename, ext = os.path.splitext(filename)
-            fileid = datetime.strftime(datetime.now(), '%d-%m-%H-%M-%S')
-            output_file = os.path.join(dirpath, filename+'-'+fileid+ext)
 
     save_mappings(mapping, output_file)
     print('Saved mappings to', output_file)
