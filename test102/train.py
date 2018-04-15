@@ -150,7 +150,7 @@ def test(model, test_loader, optimizer, args):
 
 def visualize_result(datapoints :list, model :Net, cuda :bool, target_dir :str) -> None:
     viz_loader = CornellDataLoader(datapoints)
-    get_fname = lambda finfo: f'result{finfo[0]}-{os.path.basename(finfo[1])}'
+    get_fname = lambda finfo: 'result{}-{}'.format(finfo[0], os.path.basename(finfo[1]))
     get_target_file = lambda fpath: os.path.join(target_dir, get_fname(fpath))
 
     for idx, (data, _) in enumerate(viz_loader):

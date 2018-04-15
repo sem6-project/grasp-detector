@@ -193,6 +193,21 @@ def align_rectangles_working(x1, y1, x2, y2, x3, y3):
     return line2.intersection(line3)
 
 
+def IOU(bbox1, bbox2):
+    '''Calculates overlap b/w two rectangles'''
+    x1, y1, w1, h1 = bbox1[0], bbox1[1], bbox1[2], bbox1[3]
+    x2, y2, w2, h2 = bbox2[0], bbox2[1], bbox2[2], bbox2[3]
+    w_I = min(x1+w1, x2+w2) - max(x1, x2)
+    h_I = min(y1+h1, y2+h2) - max(y1, y2)
+
+    if w_I <= 0 or h_I <= 0: # no overlap
+        return 0
+
+    I = w_I * h_I
+    U = w1*h1 + w2*h2 - I
+    return I / U
+
+
 def euclidean_distance(pt_1 :Point, pt_2 :Point) -> float:
     square = lambda n: (n) * (n)
     return math.sqrt(square(pt_1.x - pt_2.x) + square(pt_1.y - pt_2.y))
