@@ -108,8 +108,9 @@ class Net(nn.Module):
         r = torch.cat((r, x2), dim=1)
 
         r = F.relu(self.fc3(r))
+        result = r.view(-1)
 
-        # return result
+        return result
         return F.log_softmax(r, dim=1)
 
 
