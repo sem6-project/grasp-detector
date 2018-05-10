@@ -52,9 +52,9 @@ class Cartographer(object):
             x1, y1 = self.current_rectangle[0]
             x2, y2 = self.current_rectangle[1]
             x3, y3 = self.current_rectangle[2]
-            # x3, y3 = utils.align_rectangle_point(
-            #     x1, y1, x2, y2, x, y
-            # )
+            x3, y3 = utils.align_rectangle_point(
+                x1, y1, x2, y2, x, y
+            )
             self.current_rectangle[2] = (x3, y3)
             x4, y4 = int(x1+x3-x2), int(y1+y3-y2)
             self.current_rectangle.append((x4, y4))
