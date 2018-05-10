@@ -1,5 +1,7 @@
 # 2018 work 
 
+This defines the roadmap of further work in this project.
+
 ## How this will work?
 * Detectron helps identify the object.
 * Another neural network identifies the rectangles.

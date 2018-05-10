@@ -13,7 +13,7 @@ pip3 install opencv-python numpy --user
 ```
 
 **Usage**:
-```python3
+```bash
 python3 label_util.py --data-dir ../../DataRaw --output mapping.json
 ```
 
@@ -26,7 +26,7 @@ These keystrokes can be pressed while working on any image.
 | Esc       | Move to next image (discarding rectangles if any) |
 | n         | Move to next image (rectangles are ok)            |
 | c         | Clear rectangles on an image                      |
-| q (twice** | Close GUI and save results                        |
+| q (twice) | Close GUI and save results                        |
 
 **Note**: If you have already drawn rectangles for a given image, they will be shown if you view the image. You can either clear the image for new rectangles to be drawn or press 'n' to go to next image.
 This is a change from previous functioning where the mappings were merged.
