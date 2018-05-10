@@ -1,6 +1,5 @@
 import utils
 import os
-from copy import deepcopy
 import numpy as np
 import argparse
 import torch
@@ -85,6 +84,7 @@ class Net(nn.Module):
         # self.conv2_drop = nn.Dropout2d()
 
         self.fc1 = nn.Linear(self._fc1_size, 500)
+        # self.fc2 = nn.Linear(500, self._fc2_size)
         self.fc2 = nn.Linear(500, self._fc2_size)
         self.fc3 = nn.Linear(self._fc2_size + 1, self._fc3_size)
 
@@ -92,6 +92,7 @@ class Net(nn.Module):
         x1, x2 = x
         x2 = x2.view(1, 1)
         # convolution and dropouts
+        import pdb; pdb.set_trace()
         r = F.relu(F.max_pool2d(self.conv1(x1), kernel_size=2))
         r = F.relu(F.max_pool2d(self.conv2(r), kernel_size=2))
         # r = F.dropout(r, training=self.training)
@@ -103,15 +104,18 @@ class Net(nn.Module):
         r = r.view(-1, self._fc1_size)
         r = F.relu(self.fc1(r))
         r = F.dropout(r, training=self.training)
-        r = F.relu(self.fc2(r))
 
+        r = F.relu(self.fc2(r))
         r = torch.cat((r, x2), dim=1)
 
-        r = F.relu(self.fc3(r))
+        r = self.fc3(r)
+
+        # r = F.relu(self.fc3(r))
+        # r = self.fc2(r)
         result = r.view(-1)
 
         return result
-        return F.log_softmax(r, dim=1)
+        # return F.log_softmax(r, dim=1)
 
 
 def train(model, train_loader, optimizer, args, epoch) -> bool:
@@ -178,7 +182,7 @@ def visualize_result(datapoints :list, model :Net, cuda :bool, target_dir :str) 
         image, intent, target = Variable(image), Variable(intent), Variable(target)
         dp = datapoints[idx]
         prediction = model((image, intent))
-        prediction = tuple(prediction.cpu().data[0])
+        prediction = tuple(prediction.cpu().data)
         if any([x < 0 for x in prediction]):
             failed += 1
         target_file = get_target_file((idx, dp.rgb_image_path))

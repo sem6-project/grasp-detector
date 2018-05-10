@@ -118,6 +118,7 @@ class DataPoint(object):
         actual_rect = np.array(get_rectangle_vertices(self.Y), np.int32)
 
         cv2.polylines(image, [predicted_rect], True, predicted_rect_color, rect_thickness)
+        cv2.polylines(image, [actual_rect], True, predicted_rect_color, rect_thickness)
 
 
         cv2.imwrite(target_file, image)
